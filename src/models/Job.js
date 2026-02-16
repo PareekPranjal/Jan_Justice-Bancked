@@ -6,11 +6,9 @@ const jobSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add a job title'],
       trim: true,
-      maxlength: [100, 'Title cannot be more than 100 characters'],
     },
     company: {
       type: String,
-      required: [true, 'Please add a company name'],
       trim: true,
     },
     department: {
@@ -21,11 +19,9 @@ const jobSchema = new mongoose.Schema(
     description: {
       type: String,
       required: [true, 'Please add a description'],
-      maxlength: [1000, 'Description cannot be more than 1000 characters'],
     },
     detailedDescription: {
       type: String,
-      maxlength: [5000, 'Detailed description cannot be more than 5000 characters'],
     },
     responsibilities: [String],
     qualifications: [String],
@@ -61,6 +57,9 @@ const jobSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    postDate: {
+      type: Date,
+    },
     applicationDeadline: {
       type: Date,
     },
@@ -94,6 +93,12 @@ const jobSchema = new mongoose.Schema(
       filename: String,
       size: Number,
     },
+    customInputs: [
+      {
+        label: { type: String },
+        value: { type: String },
+      },
+    ],
     tabs: [
       {
         id: { type: String, required: true },

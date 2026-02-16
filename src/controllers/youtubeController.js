@@ -6,7 +6,7 @@ const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
 // Hardcoded channel ID to avoid scraping YouTube (which gets blocked on cloud servers)
 // To find your channel ID: go to YouTube > Settings > Advanced Settings
 // or view source of https://www.youtube.com/@half-civil-judge and search for "channelId"
-const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID || 'UCfIbKMXJAB_cMbNaPTfjhqQ';
+const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID || 'UCBlJo9YEiIKQUqSdR0zX4Uw';
 
 // @desc    Get latest YouTube videos from channel RSS feed
 // @route   GET /api/youtube/latest
@@ -55,9 +55,11 @@ export const getLatestVideos = async (req, res) => {
       }
     }
 
-    // Cache result
-    cachedVideos = { channelId, videos: entries };
-    cacheTimestamp = Date.now();
+    // Only cache if we got results (don't cache empty responses)
+    if (entries.length > 0) {
+      cachedVideos = { channelId, videos: entries };
+      cacheTimestamp = Date.now();
+    }
 
     res.status(200).json({ success: true, data: cachedVideos });
   } catch (error) {

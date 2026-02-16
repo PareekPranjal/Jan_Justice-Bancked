@@ -44,6 +44,7 @@ if (isProduction && cluster.isPrimary) {
   app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
     contentSecurityPolicy: false,
+    frameguard: false,
   }));
 
   // Gzip compression — reduces response size by ~70%
@@ -69,14 +70,18 @@ if (isProduction && cluster.isPrimary) {
   app.use(cors(corsOptions));
 
   // Body parsing with size limits
-  app.use(express.json({ limit: '2mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
   // Static files with caching headers
   app.use('/uploads', express.static('uploads', {
     maxAge: isProduction ? '7d' : 0,
     etag: true,
     lastModified: true,
+    setHeaders: (res) => {
+      // Allow PDFs and images to be embedded in iframes from the frontend
+      res.removeHeader('X-Frame-Options');
+    },
   }));
 
   // Health check endpoint
