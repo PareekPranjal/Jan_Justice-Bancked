@@ -3,7 +3,10 @@ let cachedVideos = null;
 let cacheTimestamp = 0;
 const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
 
-const CHANNEL_HANDLE = 'half-civil-judge';
+// Hardcoded channel ID to avoid scraping YouTube (which gets blocked on cloud servers)
+// To find your channel ID: go to YouTube > Settings > Advanced Settings
+// or view source of https://www.youtube.com/@half-civil-judge and search for "channelId"
+const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID || 'UCfIbKMXJAB_cMbNaPTfjhqQ';
 
 // @desc    Get latest YouTube videos from channel RSS feed
 // @route   GET /api/youtube/latest
@@ -15,27 +18,7 @@ export const getLatestVideos = async (req, res) => {
       return res.status(200).json({ success: true, data: cachedVideos });
     }
 
-    // Step 1: Resolve channel ID from handle
-    const channelPageRes = await fetch(`https://www.youtube.com/@${CHANNEL_HANDLE}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; LegalHubBot/1.0)',
-      },
-    });
-    const html = await channelPageRes.text();
-
-    // Extract channel ID from meta tag or page content
-    const channelIdMatch = html.match(/\"channelId\":\"(UC[a-zA-Z0-9_-]+)\"/) ||
-      html.match(/channel_id=(UC[a-zA-Z0-9_-]+)/) ||
-      html.match(/\"externalId\":\"(UC[a-zA-Z0-9_-]+)\"/);
-
-    if (!channelIdMatch) {
-      return res.status(500).json({
-        success: false,
-        message: 'Could not resolve channel ID',
-      });
-    }
-
-    const channelId = channelIdMatch[1];
+    const channelId = CHANNEL_ID;
 
     // Step 2: Fetch RSS feed
     const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
