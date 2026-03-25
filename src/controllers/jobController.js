@@ -1,4 +1,16 @@
 import Job from '../models/Job.js';
+import cloudinary from '../config/cloudinary.js';
+
+// Upload buffer to Cloudinary
+const uploadToCloudinary = (fileBuffer, options) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) reject(error);
+      else resolve(result);
+    });
+    stream.end(fileBuffer);
+  });
+};
 
 // @desc    Get all jobs
 // @route   GET /api/jobs
@@ -93,20 +105,29 @@ export const createJob = async (req, res) => {
       }
     }
 
-    // Handle file uploads
+    // Handle file uploads to Cloudinary
     if (req.files) {
       if (req.files.pdf) {
         const pdfFile = req.files.pdf[0];
+        const result = await uploadToCloudinary(pdfFile.buffer, {
+          folder: 'jan-justice/pdfs',
+          resource_type: 'raw',
+          public_id: `${Date.now()}-${pdfFile.originalname.replace(/\.[^/.]+$/, '')}`,
+        });
         jobData.jobDescriptionPdf = {
-          url: `/uploads/pdfs/${pdfFile.filename}`,
+          url: result.secure_url,
           filename: pdfFile.originalname,
           size: pdfFile.size,
         };
       }
       if (req.files.image) {
         const imageFile = req.files.image[0];
+        const result = await uploadToCloudinary(imageFile.buffer, {
+          folder: 'jan-justice/images',
+          resource_type: 'image',
+        });
         jobData.companyImage = {
-          url: `/uploads/images/${imageFile.filename}`,
+          url: result.secure_url,
           filename: imageFile.originalname,
           size: imageFile.size,
         };
@@ -143,20 +164,29 @@ export const updateJob = async (req, res) => {
       }
     }
 
-    // Handle file uploads
+    // Handle file uploads to Cloudinary
     if (req.files) {
       if (req.files.pdf) {
         const pdfFile = req.files.pdf[0];
+        const result = await uploadToCloudinary(pdfFile.buffer, {
+          folder: 'jan-justice/pdfs',
+          resource_type: 'raw',
+          public_id: `${Date.now()}-${pdfFile.originalname.replace(/\.[^/.]+$/, '')}`,
+        });
         jobData.jobDescriptionPdf = {
-          url: `/uploads/pdfs/${pdfFile.filename}`,
+          url: result.secure_url,
           filename: pdfFile.originalname,
           size: pdfFile.size,
         };
       }
       if (req.files.image) {
         const imageFile = req.files.image[0];
+        const result = await uploadToCloudinary(imageFile.buffer, {
+          folder: 'jan-justice/images',
+          resource_type: 'image',
+        });
         jobData.companyImage = {
-          url: `/uploads/images/${imageFile.filename}`,
+          url: result.secure_url,
           filename: imageFile.originalname,
           size: imageFile.size,
         };

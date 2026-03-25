@@ -1,26 +1,7 @@
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Configure storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (file.fieldname === 'pdf') {
-      cb(null, path.join(__dirname, '../../uploads/pdfs'));
-    } else if (file.fieldname === 'image') {
-      cb(null, path.join(__dirname, '../../uploads/images'));
-    } else {
-      cb(null, path.join(__dirname, '../../uploads'));
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
-  },
-});
+// Use memory storage - files are kept in buffer for Cloudinary upload
+const storage = multer.memoryStorage();
 
 // File filter
 const fileFilter = (req, file, cb) => {
