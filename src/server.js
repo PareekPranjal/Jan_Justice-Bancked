@@ -40,6 +40,9 @@ if (isProduction && cluster.isPrimary) {
   // Connect to MongoDB
   connectDB();
 
+  // Trust proxy (needed for Render, Railway, etc.)
+  app.set('trust proxy', 1);
+
   // Security headers
   app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
