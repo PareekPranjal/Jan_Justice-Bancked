@@ -1,4 +1,5 @@
 import express from 'express';
+import validateObjectId from '../middleware/validateObjectId.js';
 import {
   getAppointments,
   getAppointmentById,
@@ -18,10 +19,11 @@ router.route('/availability/:date').get(getAvailableSlots);
 
 router.route('/confirmation/:confirmationNumber').get(getAppointmentByConfirmation);
 
-router.route('/:id/status').put(updateAppointmentStatus);
+router.route('/:id/status').all(validateObjectId('id')).put(updateAppointmentStatus);
 
 router
   .route('/:id')
+  .all(validateObjectId('id'))
   .get(getAppointmentById)
   .put(updateAppointment)
   .delete(cancelAppointment);

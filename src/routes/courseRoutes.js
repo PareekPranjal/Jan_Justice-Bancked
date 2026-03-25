@@ -1,4 +1,5 @@
 import express from 'express';
+import validateObjectId from '../middleware/validateObjectId.js';
 import {
   getCourses,
   getCourseById,
@@ -14,6 +15,7 @@ router.route('/')
   .post(createCourse);
 
 router.route('/:id')
+  .all(validateObjectId('id'))
   .get(getCourseById)
   .put(updateCourse)
   .delete(deleteCourse);

@@ -1,4 +1,5 @@
 import express from 'express';
+import validateObjectId from '../middleware/validateObjectId.js';
 import {
   getAllUsers,
   getUserProfile,
@@ -17,7 +18,7 @@ const router = express.Router();
 
 // User routes
 router.route('/').get(getAllUsers);
-router.route('/:id').delete(deleteUser);
+router.route('/:id').all(validateObjectId('id')).delete(deleteUser);
 
 // Profile routes
 router.route('/profile').post(createOrUpdateProfile);

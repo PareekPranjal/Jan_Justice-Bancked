@@ -92,7 +92,7 @@ if (isProduction && cluster.isPrimary) {
   // Root
   app.get('/', (req, res) => {
     res.json({
-      message: 'LegalHub API is running',
+      message: 'Jan Justice API is running',
       version: '1.0.0',
     });
   });
