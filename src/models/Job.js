@@ -93,6 +93,7 @@ const jobSchema = new mongoose.Schema(
       filename: String,
       size: Number,
     },
+    tags: [String],
     customInputs: [
       {
         label: { type: String },
