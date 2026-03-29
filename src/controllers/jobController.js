@@ -38,9 +38,17 @@ const deleteCloudinaryPdf = async (publicId) => {
 // @access  Public
 export const getJobs = async (req, res) => {
   try {
-    const { department, company, employmentType, page, limit, search } = req.query;
+    const { department, company, employmentType, page, limit, search, admin } = req.query;
+    const now = new Date();
 
-    const filter = { isActive: true };
+    const filter = admin === 'true' ? {} : {
+      isActive: true,
+      $or: [
+        { applicationDeadline: { $exists: false } },
+        { applicationDeadline: null },
+        { applicationDeadline: { $gte: now } },
+      ],
+    };
 
     if (department) filter.department = department;
     if (company) filter.company = company;
@@ -48,13 +56,13 @@ export const getJobs = async (req, res) => {
 
     if (search && search.trim()) {
       const q = search.trim();
-      filter.$or = [
+      filter.$and = [...(filter.$and || []), { $or: [
         { title: { $regex: q, $options: 'i' } },
         { company: { $regex: q, $options: 'i' } },
         { department: { $regex: q, $options: 'i' } },
         { location: { $regex: q, $options: 'i' } },
         { description: { $regex: q, $options: 'i' } },
-      ];
+      ]}];
     }
 
     // Pagination
