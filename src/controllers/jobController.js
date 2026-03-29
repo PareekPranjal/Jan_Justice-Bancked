@@ -12,6 +12,27 @@ const uploadToCloudinary = (fileBuffer, options) => {
   });
 };
 
+// Generate short unique ID: JJ-XXXXXX
+const generateUniqueId = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let id = 'JJ-';
+  for (let i = 0; i < 6; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  return id;
+};
+
+// Sanitize string for use in Cloudinary public_id
+const sanitize = (str) => str.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').substring(0, 40);
+
+// Delete a PDF from Cloudinary by publicId (fire-and-forget, won't throw)
+const deleteCloudinaryPdf = async (publicId) => {
+  if (!publicId) return;
+  try {
+    await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
+  } catch (e) {
+    console.warn('Cloudinary PDF delete failed:', e.message);
+  }
+};
+
 // @desc    Get all jobs
 // @route   GET /api/jobs
 // @access  Public
@@ -90,6 +111,39 @@ export const getJobById = async (req, res) => {
   }
 };
 
+// @desc    Upload PDF to Cloudinary and return URL
+// @route   POST /api/jobs/upload-pdf
+// @access  Private
+export const uploadPdf = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No PDF file provided' });
+    }
+    const uniqueId = generateUniqueId();
+    const jobTitle = req.body.jobTitle ? sanitize(req.body.jobTitle) : 'Job';
+    const pdfName = sanitize(req.file.originalname.replace(/\.[^/.]+$/, ''));
+    const publicId = `jan-justice/pdfs/${jobTitle}_${pdfName}_${uniqueId}`;
+
+    const result = await uploadToCloudinary(req.file.buffer, {
+      folder: 'jan-justice/pdfs',
+      resource_type: 'raw',
+      public_id: `${jobTitle}_${pdfName}_${uniqueId}`,
+    });
+    res.status(200).json({
+      success: true,
+      data: {
+        url: result.secure_url,
+        filename: req.file.originalname,
+        size: req.file.size,
+        publicId: result.public_id,
+        uniqueId,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'PDF upload failed', error: error.message });
+  }
+};
+
 // @desc    Create new job
 // @route   POST /api/jobs
 // @access  Private (you can add authentication later)
@@ -98,7 +152,7 @@ export const createJob = async (req, res) => {
     const jobData = { ...req.body };
 
     // Parse JSON strings from FormData
-    const jsonFields = ['qualifications', 'responsibilities', 'benefits', 'skills', 'salary', 'experienceRequired', 'tabs', 'sidebarFields', 'customInputs', 'tags'];
+    const jsonFields = ['qualifications', 'responsibilities', 'benefits', 'skills', 'salary', 'experienceRequired', 'tabs', 'sidebarFields', 'customInputs', 'tags', 'jobDescriptionPdf'];
     for (const field of jsonFields) {
       if (typeof jobData[field] === 'string') {
         try { jobData[field] = JSON.parse(jobData[field]); } catch (e) { /* keep as string */ }
@@ -154,29 +208,47 @@ export const createJob = async (req, res) => {
 // @access  Private
 export const updateJob = async (req, res) => {
   try {
+    const existingJob = await Job.findById(req.params.id);
+    if (!existingJob) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+
     const jobData = { ...req.body };
 
     // Parse JSON strings from FormData
-    const jsonFields = ['qualifications', 'responsibilities', 'benefits', 'skills', 'salary', 'experienceRequired', 'tabs', 'sidebarFields', 'customInputs', 'tags'];
+    const jsonFields = ['qualifications', 'responsibilities', 'benefits', 'skills', 'salary', 'experienceRequired', 'tabs', 'sidebarFields', 'customInputs', 'tags', 'jobDescriptionPdf'];
     for (const field of jsonFields) {
       if (typeof jobData[field] === 'string') {
         try { jobData[field] = JSON.parse(jobData[field]); } catch (e) { /* keep as string */ }
       }
     }
 
-    // Handle file uploads to Cloudinary
+    // If PDF is being replaced, delete old one from Cloudinary
+    const oldPublicId = existingJob.jobDescriptionPdf?.publicId;
+    const newPublicId = jobData.jobDescriptionPdf?.publicId;
+    if (oldPublicId && newPublicId && oldPublicId !== newPublicId) {
+      await deleteCloudinaryPdf(oldPublicId);
+    }
+
+    // Handle file uploads to Cloudinary (legacy fallback)
     if (req.files) {
       if (req.files.pdf) {
+        await deleteCloudinaryPdf(oldPublicId);
         const pdfFile = req.files.pdf[0];
+        const uniqueId = generateUniqueId();
+        const jobTitle = sanitize(existingJob.title || 'Job');
+        const pdfName = sanitize(pdfFile.originalname.replace(/\.[^/.]+$/, ''));
         const result = await uploadToCloudinary(pdfFile.buffer, {
           folder: 'jan-justice/pdfs',
           resource_type: 'raw',
-          public_id: `${Date.now()}-${pdfFile.originalname.replace(/\.[^/.]+$/, '')}`,
+          public_id: `${jobTitle}_${pdfName}_${uniqueId}`,
         });
         jobData.jobDescriptionPdf = {
           url: result.secure_url,
           filename: pdfFile.originalname,
           size: pdfFile.size,
+          publicId: result.public_id,
+          uniqueId,
         };
       }
       if (req.files.image) {
@@ -193,32 +265,11 @@ export const updateJob = async (req, res) => {
       }
     }
 
-    const job = await Job.findByIdAndUpdate(
-      req.params.id,
-      jobData,
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    const job = await Job.findByIdAndUpdate(req.params.id, jobData, { new: true, runValidators: true });
 
-    if (!job) {
-      return res.status(404).json({
-        success: false,
-        message: 'Job not found',
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: job,
-    });
+    res.status(200).json({ success: true, data: job });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: 'Invalid job data',
-      error: error.message,
-    });
+    res.status(400).json({ success: false, message: 'Invalid job data', error: error.message });
   }
 };
 
@@ -227,7 +278,7 @@ export const updateJob = async (req, res) => {
 // @access  Private
 export const deleteJob = async (req, res) => {
   try {
-    const job = await Job.findByIdAndDelete(req.params.id);
+    const job = await Job.findById(req.params.id);
 
     if (!job) {
       return res.status(404).json({
@@ -235,6 +286,11 @@ export const deleteJob = async (req, res) => {
         message: 'Job not found',
       });
     }
+
+    // Delete PDF from Cloudinary
+    await deleteCloudinaryPdf(job.jobDescriptionPdf?.publicId);
+
+    await job.deleteOne();
 
     res.status(200).json({
       success: true,

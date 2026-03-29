@@ -7,9 +7,12 @@ import {
   createJob,
   updateJob,
   deleteJob,
+  uploadPdf,
 } from '../controllers/jobController.js';
 
 const router = express.Router();
+
+router.post('/upload-pdf', upload.single('pdf'), uploadPdf);
 
 router.route('/')
   .get(getJobs)

@@ -87,6 +87,8 @@ const jobSchema = new mongoose.Schema(
       url: String,
       filename: String,
       size: Number,
+      publicId: String,
+      uniqueId: String,
     },
     companyImage: {
       url: String,
