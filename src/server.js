@@ -13,6 +13,7 @@ import appointmentRoutes from './routes/appointmentRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import youtubeRoutes from './routes/youtubeRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -101,6 +102,7 @@ if (isProduction && cluster.isPrimary) {
   });
 
   // API Routes
+  app.use('/api/auth', authRoutes);
   app.use('/api/jobs', jobRoutes);
   app.use('/api/courses', courseRoutes);
   app.use('/api/appointments', appointmentRoutes);

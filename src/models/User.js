@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema(
   {
@@ -20,22 +21,25 @@ const userSchema = new mongoose.Schema(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
     },
-    phone: {
+    password: {
       type: String,
-      trim: true,
+      required: [true, 'Password is required'],
+      minlength: [6, 'Password must be at least 6 characters'],
+      select: false,
     },
-    location: {
+    role: {
       type: String,
-      trim: true,
+      enum: ['user', 'admin'],
+      default: 'user',
     },
-    title: {
-      type: String,
-      trim: true,
+    isActive: {
+      type: Boolean,
+      default: true,
     },
-    company: {
-      type: String,
-      trim: true,
-    },
+    phone: { type: String, trim: true },
+    location: { type: String, trim: true },
+    title: { type: String, trim: true },
+    company: { type: String, trim: true },
     avatar: {
       type: String,
       default: 'https://api.dicebear.com/7.x/avataaars/svg?seed=default',
@@ -45,17 +49,26 @@ const userSchema = new mongoose.Schema(
       maxlength: [500, 'Bio cannot exceed 500 characters'],
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
+
+// Hash password before saving
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 12);
+  next();
+});
+
+// Compare entered password with stored hash
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 // Virtual for full name
 userSchema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName}`;
 });
 
-// Ensure virtuals are included in JSON
 userSchema.set('toJSON', { virtuals: true });
 userSchema.set('toObject', { virtuals: true });
 
