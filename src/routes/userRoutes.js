@@ -18,7 +18,6 @@ const router = express.Router();
 
 // User routes
 router.route('/').get(getAllUsers);
-router.route('/:id').all(validateObjectId('id')).delete(deleteUser);
 
 // Profile routes
 router.route('/profile').post(createOrUpdateProfile);
@@ -28,13 +27,16 @@ router.route('/profile/:email').get(getUserProfile);
 router.route('/stats/:email').get(getUserStats);
 
 // Saved jobs routes
-router.route('/saved-jobs/:email').get(getSavedJobs);
 router.route('/saved-jobs').post(saveJob);
+router.route('/saved-jobs/:email').get(getSavedJobs);
 router.route('/saved-jobs/:savedJobId').delete(unsaveJob);
 
 // Course enrollment routes
-router.route('/enrollments/:email').get(getCourseEnrollments);
 router.route('/enrollments').post(enrollInCourse);
+router.route('/enrollments/:email').get(getCourseEnrollments);
 router.route('/enrollments/:enrollmentId').put(updateCourseProgress);
+
+// /:id must be LAST — it catches everything else
+router.route('/:id').all(validateObjectId('id')).delete(deleteUser);
 
 export default router;
