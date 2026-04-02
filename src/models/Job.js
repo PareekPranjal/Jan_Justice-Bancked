@@ -76,6 +76,9 @@ const jobSchema = new mongoose.Schema(
     companyWebsite: {
       type: String,
     },
+    applyUrl: {
+      type: String,
+    },
     numberOfOpenings: {
       type: Number,
       default: 1,
