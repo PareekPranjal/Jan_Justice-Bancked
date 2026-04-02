@@ -159,13 +159,19 @@ export const createJob = async (req, res) => {
   try {
     const jobData = { ...req.body };
 
-    // Parse JSON strings from FormData
+    // Parse JSON strings (legacy FormData support)
     const jsonFields = ['qualifications', 'responsibilities', 'benefits', 'skills', 'salary', 'experienceRequired', 'tabs', 'sidebarFields', 'customInputs', 'tags', 'jobDescriptionPdf'];
     for (const field of jsonFields) {
       if (typeof jobData[field] === 'string') {
         try { jobData[field] = JSON.parse(jobData[field]); } catch (e) { /* keep as string */ }
       }
     }
+
+    // Explicit plain-string fields — ensure they pass through
+    if (req.body.applyUrl !== undefined) jobData.applyUrl = req.body.applyUrl;
+    if (req.body.companyWebsite !== undefined) jobData.companyWebsite = req.body.companyWebsite;
+    if (req.body.contactEmail !== undefined) jobData.contactEmail = req.body.contactEmail;
+    if (req.body.contactPhone !== undefined) jobData.contactPhone = req.body.contactPhone;
 
     // Handle file uploads to Cloudinary
     if (req.files) {
@@ -223,13 +229,19 @@ export const updateJob = async (req, res) => {
 
     const jobData = { ...req.body };
 
-    // Parse JSON strings from FormData
+    // Parse JSON strings (legacy FormData support)
     const jsonFields = ['qualifications', 'responsibilities', 'benefits', 'skills', 'salary', 'experienceRequired', 'tabs', 'sidebarFields', 'customInputs', 'tags', 'jobDescriptionPdf'];
     for (const field of jsonFields) {
       if (typeof jobData[field] === 'string') {
         try { jobData[field] = JSON.parse(jobData[field]); } catch (e) { /* keep as string */ }
       }
     }
+
+    // Explicit plain-string fields — ensure they pass through
+    if (req.body.applyUrl !== undefined) jobData.applyUrl = req.body.applyUrl;
+    if (req.body.companyWebsite !== undefined) jobData.companyWebsite = req.body.companyWebsite;
+    if (req.body.contactEmail !== undefined) jobData.contactEmail = req.body.contactEmail;
+    if (req.body.contactPhone !== undefined) jobData.contactPhone = req.body.contactPhone;
 
     // If PDF is being replaced, delete old one from Cloudinary
     const oldPublicId = existingJob.jobDescriptionPdf?.publicId;
