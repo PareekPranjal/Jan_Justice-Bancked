@@ -14,6 +14,7 @@ import statsRoutes from './routes/statsRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import youtubeRoutes from './routes/youtubeRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -109,6 +110,7 @@ if (isProduction && cluster.isPrimary) {
   app.use('/api/stats', statsRoutes);
   app.use('/api/users', userRoutes);
   app.use('/api/youtube', youtubeRoutes);
+  app.use('/api/analytics', analyticsRoutes);
 
   // Error Handler
   app.use(errorHandler);
