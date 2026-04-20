@@ -67,14 +67,21 @@ if (isProduction && cluster.isPrimary) {
   app.use('/api/', apiLimiter);
 
   // CORS Configuration
-  // Set ALLOWED_ORIGINS in your .env as a comma-separated list of frontend URLs.
+  // Set ALLOWED_ORIGINS in your deployment env as a comma-separated list of frontend URLs.
   // e.g. ALLOWED_ORIGINS=https://yoursite.com,https://admin.yoursite.com
+  // If not set, all origins are allowed (set it in production for tighter security).
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-    : ['http://localhost:5173', 'http://localhost:5174'];
+    : null;
+
+  if (!allowedOrigins && isProduction) {
+    console.warn('⚠️  ALLOWED_ORIGINS not set — all origins are permitted. Set this env var to restrict access.');
+  }
 
   const corsOptions = {
     origin: (origin, callback) => {
+      // No restriction if ALLOWED_ORIGINS is not configured
+      if (!allowedOrigins) return callback(null, true);
       // Allow server-to-server requests (no Origin header) and listed origins
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
