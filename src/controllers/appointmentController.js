@@ -133,6 +133,8 @@ export const createAppointment = async (req, res) => {
       });
     }
 
+    const { transactionId } = req.body;
+
     const appointment = await Appointment.create({
       serviceType,
       serviceTitle,
@@ -143,6 +145,7 @@ export const createAppointment = async (req, res) => {
       clientEmail,
       clientPhone,
       notes,
+      ...(transactionId ? { transactionId: transactionId.trim() } : {}),
     });
 
     res.status(201).json({
@@ -181,6 +184,7 @@ export const updateAppointment = async (req, res) => {
       clientPhone,
       notes,
       status,
+      actionBy,
     } = req.body;
 
     const appointment = await Appointment.findById(req.params.id);
@@ -212,6 +216,9 @@ export const updateAppointment = async (req, res) => {
       }
     }
 
+    // Build reschedule note before updating
+    const oldSlot = `${appointment.appointmentDate.toISOString().split('T')[0]} ${appointment.appointmentTime}`;
+
     // Update fields
     if (appointmentDate) appointment.appointmentDate = new Date(appointmentDate);
     if (appointmentTime) appointment.appointmentTime = appointmentTime;
@@ -220,6 +227,19 @@ export const updateAppointment = async (req, res) => {
     if (clientPhone !== undefined) appointment.clientPhone = clientPhone;
     if (notes !== undefined) appointment.notes = notes;
     if (status) appointment.status = status;
+
+    // Append reschedule action if date/time changed and admin info provided
+    const isReschedule = appointmentDate || appointmentTime;
+    if (isReschedule && actionBy?.adminName) {
+      const newSlot = `${new Date(appointmentDate || appointment.appointmentDate).toISOString().split('T')[0]} ${appointmentTime || appointment.appointmentTime}`;
+      appointment.actionHistory.push({
+        action:    'rescheduled',
+        adminId:   actionBy.adminId   || '',
+        adminName: actionBy.adminName || '',
+        note:      `From ${oldSlot} → ${newSlot}`,
+        at:        new Date(),
+      });
+    }
 
     await appointment.save();
 
@@ -343,7 +363,7 @@ export const getAvailableSlots = async (req, res) => {
 // @access  Public (should be protected with auth in production)
 export const updateAppointmentStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, actionBy } = req.body;
 
     if (!status || !['pending', 'confirmed', 'completed', 'cancelled'].includes(status)) {
       return res.status(400).json({
@@ -362,9 +382,25 @@ export const updateAppointmentStatus = async (req, res) => {
     }
 
     appointment.status = status;
+
+    // Keep legacy confirmedBy for backward compat
+    if (status === 'confirmed' && actionBy) {
+      appointment.confirmedBy = { userId: actionBy.adminId || '', name: actionBy.adminName || '' };
+    }
     if (status === 'cancelled') {
       appointment.isActive = false;
     }
+
+    // Append to action history
+    if (actionBy?.adminName) {
+      appointment.actionHistory.push({
+        action:    status,
+        adminId:   actionBy.adminId   || '',
+        adminName: actionBy.adminName || '',
+        at:        new Date(),
+      });
+    }
+
     await appointment.save();
 
     res.status(200).json({

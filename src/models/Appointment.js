@@ -55,6 +55,24 @@ const appointmentSchema = new mongoose.Schema(
       type: String,
       unique: true,
     },
+    transactionId: {
+      type: String,
+      trim: true,
+    },
+    // Legacy single field kept for old data — new data uses actionHistory
+    confirmedBy: {
+      userId: { type: String },
+      name:   { type: String },
+    },
+    actionHistory: [
+      {
+        action:    { type: String }, // 'confirmed' | 'cancelled' | 'completed' | 'rescheduled'
+        adminId:   { type: String },
+        adminName: { type: String },
+        note:      { type: String }, // e.g. old slot for reschedule
+        at:        { type: Date, default: Date.now },
+      },
+    ],
     isActive: {
       type: Boolean,
       default: true,

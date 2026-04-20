@@ -67,8 +67,21 @@ if (isProduction && cluster.isPrimary) {
   app.use('/api/', apiLimiter);
 
   // CORS Configuration
+  // Set ALLOWED_ORIGINS in your .env as a comma-separated list of frontend URLs.
+  // e.g. ALLOWED_ORIGINS=https://yoursite.com,https://admin.yoursite.com
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+    : ['http://localhost:5173', 'http://localhost:5174'];
+
   const corsOptions = {
-    origin: true,
+    origin: (origin, callback) => {
+      // Allow server-to-server requests (no Origin header) and listed origins
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

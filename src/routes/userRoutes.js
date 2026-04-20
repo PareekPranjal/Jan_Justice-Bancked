@@ -1,5 +1,6 @@
 import express from 'express';
 import validateObjectId from '../middleware/validateObjectId.js';
+import { protect, adminOnly } from '../middleware/auth.js';
 import {
   getAllUsers,
   getUserProfile,
@@ -16,8 +17,8 @@ import {
 
 const router = express.Router();
 
-// User routes
-router.route('/').get(getAllUsers);
+// User routes — admin only
+router.route('/').get(protect, adminOnly, getAllUsers);
 
 // Profile routes
 router.route('/profile').post(createOrUpdateProfile);
@@ -37,6 +38,6 @@ router.route('/enrollments/:email').get(getCourseEnrollments);
 router.route('/enrollments/:enrollmentId').put(updateCourseProgress);
 
 // /:id must be LAST — it catches everything else
-router.route('/:id').all(validateObjectId('id')).delete(deleteUser);
+router.route('/:id').all(validateObjectId('id')).delete(protect, adminOnly, deleteUser);
 
 export default router;
