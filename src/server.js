@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/database.js';
 import jobRoutes from './routes/jobRoutes.js';
 import courseRoutes from './routes/courseRoutes.js';
+import blogRoutes from './routes/blogRoutes.js';
 import appointmentRoutes from './routes/appointmentRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -127,6 +128,7 @@ if (isProduction && cluster.isPrimary) {
   app.use('/api/auth', authRoutes);
   app.use('/api/jobs', jobRoutes);
   app.use('/api/courses', courseRoutes);
+  app.use('/api/blogs', blogRoutes);
   app.use('/api/appointments', appointmentRoutes);
   app.use('/api/stats', statsRoutes);
   app.use('/api/users', userRoutes);
