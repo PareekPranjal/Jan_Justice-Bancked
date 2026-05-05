@@ -106,7 +106,7 @@ export const createBlog = async (req, res) => {
       if (featuredCount >= FEATURED_LIMIT) {
         return res.status(400).json({
           success: false,
-          message: `You can feature at most ${FEATURED_LIMIT} blogs. Un-feature one first.`,
+          message: `You can feature at most ${FEATURED_LIMIT} articles. Un-feature one first.`,
         });
       }
     }
@@ -131,7 +131,7 @@ export const updateBlog = async (req, res) => {
       if (featuredCount >= FEATURED_LIMIT) {
         return res.status(400).json({
           success: false,
-          message: `You can feature at most ${FEATURED_LIMIT} blogs. Un-feature one first.`,
+          message: `You can feature at most ${FEATURED_LIMIT} articles. Un-feature one first.`,
         });
       }
     }
