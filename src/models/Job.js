@@ -105,6 +105,17 @@ const jobSchema = new mongoose.Schema(
         value: { type: String },
       },
     ],
+    roles: [
+      {
+        id: { type: String },
+        customInputs: [
+          {
+            label: { type: String },
+            value: { type: String },
+          },
+        ],
+      },
+    ],
     tabs: [
       {
         id: { type: String, required: true },

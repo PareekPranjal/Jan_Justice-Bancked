@@ -160,7 +160,7 @@ export const createJob = async (req, res) => {
     const jobData = { ...req.body };
 
     // Parse JSON strings (legacy FormData support)
-    const jsonFields = ['qualifications', 'responsibilities', 'benefits', 'skills', 'salary', 'experienceRequired', 'tabs', 'sidebarFields', 'customInputs', 'tags', 'jobDescriptionPdf'];
+    const jsonFields = ['qualifications', 'responsibilities', 'benefits', 'skills', 'salary', 'experienceRequired', 'tabs', 'sidebarFields', 'customInputs', 'roles', 'tags', 'jobDescriptionPdf'];
     for (const field of jsonFields) {
       if (typeof jobData[field] === 'string') {
         try { jobData[field] = JSON.parse(jobData[field]); } catch (e) { /* keep as string */ }
@@ -230,7 +230,7 @@ export const updateJob = async (req, res) => {
     const jobData = { ...req.body };
 
     // Parse JSON strings (legacy FormData support)
-    const jsonFields = ['qualifications', 'responsibilities', 'benefits', 'skills', 'salary', 'experienceRequired', 'tabs', 'sidebarFields', 'customInputs', 'tags', 'jobDescriptionPdf'];
+    const jsonFields = ['qualifications', 'responsibilities', 'benefits', 'skills', 'salary', 'experienceRequired', 'tabs', 'sidebarFields', 'customInputs', 'roles', 'tags', 'jobDescriptionPdf'];
     for (const field of jsonFields) {
       if (typeof jobData[field] === 'string') {
         try { jobData[field] = JSON.parse(jobData[field]); } catch (e) { /* keep as string */ }
